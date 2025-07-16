@@ -46,3 +46,17 @@ def register_user(request):
     user.insert_one(new_user)
 
     return jsonify({'message': 'User registered successfully'}), 201
+
+def get_professionals_info(request):
+    data = request.json
+    profession = data.get('profession')
+
+    if not profession:
+        return jsonify({'error': 'Profession is required'}), 400
+
+    professionals = list(user.find({'profession': profession}))
+
+    if not professionals:
+        return jsonify({'error': 'No professionals found for this profession'}), 404
+
+    return jsonify({'professionals': professionals}), 2004
