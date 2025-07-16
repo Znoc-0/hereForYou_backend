@@ -1,4 +1,4 @@
-from db import user
+from mods.db.db import user
 
 from flask import Flask, request, jsonify
 
