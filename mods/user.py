@@ -98,29 +98,46 @@ def get_professionals_info(request):
 
 def register_professional(request):
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
     email = data.get('email')
     phone = data.get('phone')
-    profession = data.get('profession')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    phone_number = data.get('phone_number')
+    date_of_birth = data.get('date_of_birth') 
+    gender = data.get('gender')
+    address = data.get('address')
+    city = data.get('city')
+    pincode = data.get('pincode')
+    service_provided = data.get('service_provided')
+    years_of_experience = data.get('years_of_experience')
+    hourly_rate = data.get('hourly_rate')
+    service_description = data.get('service_description')
+    bank_account_no = data.get('bank_account_no')
+    bank_name = data.get('bank_name')
+    ifsc_code = data.get('ifs_code')
+    account_holder_name = data.get('account_holder_name')
 
-    if not username or not password or not email or not phone or not profession:
-        return jsonify({'error': 'All fields are required'}), 400
-
-    if user.find_one({'username': username}):
-        return jsonify({'error': 'Username already exists'}), 409
-    if user.find_one({'email': email}):
-        return jsonify({'error': 'Email already exists'}), 409
-    if user.find_one({'phone': phone}):
-        return jsonify({'error': 'Phone number already exists'}), 409
 
     new_professional = {
-        'username': username,
-        'password': password,
         'email': email,
         'phone': phone,
-        'profession': profession,
-        'user_type': 'professional'  # Set user type as professional
+        'first_name': first_name,
+        'last_name': last_name,
+        'phone_number': phone_number,
+        'date_of_birth': date_of_birth,
+        'gender': gender,
+        'address': address,
+        'city': city,
+        'pincode': pincode,
+        'service_provided': service_provided,
+        'years_of_experience': years_of_experience,
+        'hourly_rate': hourly_rate,
+        'service_description': service_description,
+        'bank_account_no': bank_account_no,
+        'bank_name': bank_name,
+        'ifs_code': ifsc_code,
+        'account_holder_name': account_holder_name
+        
     }
 
     user.insert_one(new_professional)
