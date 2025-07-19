@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from mods.user import login_user , register_user , get_professionals_info , register_professional
-
+from mods.user import login_user , register_user , get_professionals_info , register_professional,book_appointment,list_user_bookings
 app = Flask(__name__)
 CORS(app)
 
@@ -20,6 +19,14 @@ def get_professionals():
 @app.route('/register_professional', methods=['POST'])
 def registerProfessional():
     return register_professional(request)
+
+@app.route('/booking', methods=['POST'])
+def booking():
+    return book_appointment(request)
+
+@app.route('/list_bookings', methods=['POST'])
+def list_bookings():
+    return list_user_bookings(request)
 
 if __name__ == '__main__':
     app.run(debug=True)

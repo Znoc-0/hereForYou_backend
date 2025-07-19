@@ -1,4 +1,5 @@
-from mods.db.db import user
+from mods.db.db import user , bookings, professionals
+import secrets
 
 from flask import Flask, request, jsonify
 
@@ -16,9 +17,21 @@ def login_user(request):
 
     if not user_data:
         return jsonify({'error': 'Invalid username or password'}), 401
+    
+    
+    session_token = secrets.token_hex(16)
+    user.update_one({'_id': user_data['_id']}, {'$set': {'session_token': session_token}})
 
-    return jsonify({'message': 'Login successful', 'user': {'username': user_data['username']}}), 200
+    
+    response = jsonify({
+        'message': 'Login successful',
+        'user': {
+            'username': user_data['username'],
+        }
+    })
+    response.set_cookie('session_token', session_token)
 
+    return response, 200
 
 
 def register_user(request):
@@ -63,7 +76,24 @@ def get_professionals_info(request):
     if not professionals:
         return jsonify({'error': 'No professionals found for this profession'}), 404
 
-    return jsonify({'professionals': professionals}), 204
+    professionals_info = []
+    for professional in professionals:
+        professional_info = {
+            'name': professional.get('name'),
+            'place': professional.get('place'),
+            'rating': professional.get('rating'),
+            'reviews': professional.get('reviews', []),
+            'experience': professional.get('experience'),
+            'rate_of_service': professional.get('rate_of_service', {}),  # Fetch entire rate_of_service dictionary from DB
+            'distance': professional.get('distance'),
+            'specialities': professional.get('specialities', []),
+            'is_available': professional.get('is_available', False),
+            'certifications': professional.get('certifications', []),
+            'years_of_experience': professional.get('years_of_experience'),
+            'services': professional.get('services', []),
+        }
+        professionals_info.append(professional_info)
+    return jsonify({'professionals': professionals_info}), 200
 
 
 def register_professional(request):
@@ -96,3 +126,66 @@ def register_professional(request):
     user.insert_one(new_professional)
 
     return jsonify({'message': 'Professional registered successfully'}), 201
+
+
+def book_appointment(request):
+    data = request.json
+    session_token = request.cookies.get('session_token')
+    if not session_token:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_data = user.find_one({'session_token': session_token})
+    if not user_data:
+        return jsonify({'error': 'Invalid session token'}), 401
+    
+    booking_details = {
+        'user_id': user_data['_id'],
+        'professional_id': data.get('professional_id'),
+        'dates_and_times': data.get('dates_and_times'),
+        'full_address': data.get('full_address'),
+        'booking_date': data.get('booking_date'),
+        'booking_time': data.get('booking_time'),
+        'booking_status': 'pending',
+        'pincode': data.get('pin_code'),
+        'city': data.get('city'),
+        'service_type': data.get('service_type'),
+        'problem_description': data.get('problem_description'),
+        'urgency_level': data.get('urgency_level'),
+        'user_name': data.get('user_name'),
+        'user_phone': data.get('user_phone'),
+        'user_alternative_phone': data.get('user_alternative_phone'),
+        'special_instructions': data.get('special_instructions'),
+        'booking_id': secrets.token_hex(8)  # Generate a unique booking ID
+    }
+
+    if not booking_details['professional_id'] or not booking_details['dates_and_times'] or not booking_details['full_address']:
+        return jsonify({'error': 'All fields are required'}), 400
+    
+
+    bookings.insert_one(booking_details)
+
+    return jsonify({'message': 'Appointment booked successfully', 'booking_id': booking_details['booking_id']}), 201
+
+
+
+def get_user_by_session_token(session_token):
+    return user.find_one({'session_token': session_token})
+
+
+def list_user_bookings(request):
+    session_token = request.cookies.get('session_token')
+    if not session_token:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_data = get_user_by_session_token(session_token)
+    if not user_data:
+        return jsonify({'error': 'Invalid session token'}), 401
+    
+    user_bookings = list(bookings.find({'user_id': user_data['_id']}))
+
+    if not user_bookings:
+        return jsonify({'message': 'No bookings found for this user'}), 404
+
+    return jsonify({'bookings': user_bookings}), 200
+
+
