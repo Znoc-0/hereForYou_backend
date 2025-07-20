@@ -3,7 +3,7 @@
 
   ---
 
-  ## Method [POST]   Base_url/login
+  ## Method [POST],      /login
 
   ### Description
   Authenticate a user by email and password. Returns a secure session token cookie and user info on success.
@@ -60,7 +60,7 @@
 
   ---
 
-  ## Method [POST] Base_url/register
+  ## Method [POST] /register
 
   ### Description
   Register a new user with fullname, email, password, and phone.
@@ -124,7 +124,7 @@
 
   ---
 
-  ## Method [POST] Base_url/get_professionals
+  ## Method [POST] /get_professionals
 
   ### Description
   Get a list of professionals filtered by `service_provided` and `city`.
@@ -194,7 +194,7 @@
 
   ---
 
-  ## Method [POST] Base_url/register_professional
+  ## Method [POST] /register_professional
 
   ### Description
   Register a new professional with detailed info including bank details.
@@ -262,7 +262,7 @@
 
   ---
 
-  ## Method [POST] Base_url/booking
+  ## Method [POST]   /booking
 
   ### Description
   Book an appointment with a professional. Requires user authentication via session cookie.
@@ -348,7 +348,7 @@
 
   ---
 
-  ## Method [POST] Base_url/list_bookings
+  ## Method [POST] /list_bookings
 
   ### Description
   List all bookings of the authenticated user.
