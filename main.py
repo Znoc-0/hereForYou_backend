@@ -4,7 +4,6 @@ from mods.user import login_user , register_user , get_professionals_info , regi
 app = Flask(__name__)
 CORS(app)
 
-from mods.db.db import user, professionals, bookings
 @app.route('/login', methods=['POST'])
 def login():
    return login_user(request)
