@@ -7,16 +7,16 @@ from flask import Flask, request, jsonify
 
 def login_user(request):
     data = request.json
-    username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
 
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
 
-    user_data = user.find_one({'username': username, 'password': password})
-
+    user_data = user.find_one({'email': email, 'password': password})
+    # print(user_data)
     if not user_data:
-        return jsonify({'error': 'Invalid username or password'}), 401
+        return jsonify({'error': 'Invalid email or password'}), 401
     
     
     session_token = secrets.token_hex(16)
@@ -26,36 +26,33 @@ def login_user(request):
     response = jsonify({
         'message': 'Login successful',
         'user': {
-            'username': user_data['username'],
+            'email': user_data['email'],
         }
     })
-    response.set_cookie('session_token', session_token)
-
+    response.set_cookie('session_token', session_token , httponly=True, secure=True)
     return response, 200
 
 
 def register_user(request):
     data = request.json
-    username = data.get('username')
+    fullname = data.get('fullname')
     password = data.get('password')
     email = data.get('email')
     phone = data.get('phone')   
-    user_type = data.get('user_type')  # Default user type if not provided
+      # Default user type if not provided
 
 
-    if not username or not password or not email or not phone:
+    if not fullname or not password or not email or not phone:
         return jsonify({'error': 'All fields are required'}), 400
-    if user.find_one({'username': username}):
-            return jsonify({'error': 'Username already exists'}), 409
+   
     if user.find_one({'email': email}):
         return jsonify({'error': 'Email already exists'}), 409
     if user.find_one({'phone': phone}):
         return jsonify({'error': 'Phone number already exists'}), 409
     
     new_user = {
-        'username': username,
+        'fullname': fullname,
         'password': password,
-        'user_type': user_type,  # Default user type
         'email': email,
         'phone': phone
     }
@@ -66,31 +63,38 @@ def register_user(request):
 
 def get_professionals_info(request):
     data = request.json
-    profession = data.get('profession')
+    service_provided = data.get('service_provided')
+    city = data.get('city')
 
-    if not profession:
-        return jsonify({'error': 'Profession is required'}), 400
+    if not service_provided or not city:
+        return jsonify({'error': 'service_provided and city are necessary'}), 400
 
-    professionals = list(user.find({'profession': profession}))
+    professional = list(professionals.find({'service_provided': service_provided , 'city': city}))
 
-    if not professionals:
-        return jsonify({'error': 'No professionals found for this profession'}), 404
+    if not professional or len(professional) == 0:
+        return jsonify({'error': 'No professionals found for this service_provided and city'}), 404
+    
 
     professionals_info = []
-    for professional in professionals:
+    for profession in professional:
+        
         professional_info = {
-            'name': professional.get('name'),
-            'place': professional.get('place'),
-            'rating': professional.get('rating'),
-            'reviews': professional.get('reviews', []),
-            'experience': professional.get('experience'),
-            'rate_of_service': professional.get('rate_of_service', {}),  # Fetch entire rate_of_service dictionary from DB
-            'distance': professional.get('distance'),
-            'specialities': professional.get('specialities', []),
-            'is_available': professional.get('is_available', False),
-            'certifications': professional.get('certifications', []),
-            'years_of_experience': professional.get('years_of_experience'),
-            'services': professional.get('services', []),
+            'professional_id': str(profession['_id']),
+            'first_name': profession.get('first_name'),
+            'last_name': profession.get('last_name'),
+            'email': profession.get('email'),
+            'phone': profession.get('phone'),
+            'phone_number': profession.get('phone_number'),
+            'date_of_birth': profession.get('date_of_birth'),
+            'gender': profession.get('gender'),
+            'address': profession.get('address'),
+            'city': profession.get('city'),
+            'pincode': profession.get('pincode'),
+            'service_provided': profession.get('service_provided', []),
+            'years_of_experience': profession.get('years_of_experience'),
+            'hourly_rate': profession.get('hourly_rate'),
+            'service_description': profession.get('service_description'),
+           
         }
         professionals_info.append(professional_info)
     return jsonify({'professionals': professionals_info}), 200
@@ -106,7 +110,7 @@ def register_professional(request):
     date_of_birth = data.get('date_of_birth') 
     gender = data.get('gender')
     address = data.get('address')
-    city = data.get('city')
+    city = city.lower(data.get('city'))
     pincode = data.get('pincode')
     service_provided = data.get('service_provided')
     years_of_experience = data.get('years_of_experience')
@@ -140,7 +144,7 @@ def register_professional(request):
         
     }
 
-    user.insert_one(new_professional)
+    professionals.insert_one(new_professional)
 
     return jsonify({'message': 'Professional registered successfully'}), 201
 
@@ -199,10 +203,32 @@ def list_user_bookings(request):
         return jsonify({'error': 'Invalid session token'}), 401
     
     user_bookings = list(bookings.find({'user_id': user_data['_id']}))
+    
+    userbooking= []
+    for booking in user_bookings:
+        booking_info = {
+            'booking_id': booking.get('booking_id'),
+            'professional_id': booking.get('professional_id'),
+            'dates_and_times': booking.get('dates_and_times'),
+            'full_address': booking.get('full_address'),
+            'booking_date': booking.get('booking_date'),
+            'booking_time': booking.get('booking_time'),
+            'booking_status': booking.get('booking_status'),
+            'pincode': booking.get('pincode'),
+            'city': booking.get('city'),
+            'service_type': booking.get('service_type'),
+            'problem_description': booking.get('problem_description'),
+            'urgency_level': booking.get('urgency_level'),
+            'user_name': booking.get('user_name'),
+            'user_phone': booking.get('user_phone'),
+            'user_alternative_phone': booking.get('user_alternative_phone'),
+            'special_instructions': booking.get('special_instructions')
+        }
+        userbooking.append(booking_info)
 
-    if not user_bookings:
+    if not userbooking:
         return jsonify({'message': 'No bookings found for this user'}), 404
 
-    return jsonify({'bookings': user_bookings}), 200
+    return jsonify({'bookings': userbooking}), 200
 
 
