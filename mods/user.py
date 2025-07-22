@@ -1,6 +1,6 @@
 from mods.db.db import user , bookings, professionals
 import secrets
-
+import re
 from flask import Flask, request, jsonify
 
 
@@ -27,6 +27,7 @@ def login_user(request):
         'message': 'Login successful',
         'user': {
             'email': user_data['email'],
+            'phone': user_data['phone']
         }
     })
     response.set_cookie('session_token', session_token , httponly=True, secure=True)
@@ -69,15 +70,24 @@ def get_professionals_info(request):
     if not service_provided or not city:
         return jsonify({'error': 'service_provided and city are necessary'}), 400
 
-    professional = list(professionals.find({'service_provided': service_provided , 'city': city}))
+    # Build regex pattern to match the service as a word within the string
+    regex_pattern = rf'\b{re.escape(service_provided.strip())}\b'
 
-    if not professional or len(professional) == 0:
+    query = {
+        'city': city,
+        'service_provided': {
+            '$regex': regex_pattern,
+            '$options': 'i'  # Case-insensitive
+        }
+    }
+
+    professionals_list = list(professionals.find(query))
+
+    if not professionals_list:
         return jsonify({'error': 'No professionals found for this service_provided and city'}), 404
-    
 
     professionals_info = []
-    for profession in professional:
-        
+    for profession in professionals_list:
         professional_info = {
             'professional_id': str(profession['_id']),
             'first_name': profession.get('first_name'),
@@ -90,15 +100,14 @@ def get_professionals_info(request):
             'address': profession.get('address'),
             'city': profession.get('city'),
             'pincode': profession.get('pincode'),
-            'service_provided': profession.get('service_provided', []),
+            'service_provided': profession.get('service_provided', ""),
             'years_of_experience': profession.get('years_of_experience'),
             'hourly_rate': profession.get('hourly_rate'),
             'service_description': profession.get('service_description'),
-           
         }
         professionals_info.append(professional_info)
-    return jsonify({'professionals': professionals_info}), 200
 
+    return jsonify({'professionals': professionals_info}), 200
 
 def register_professional(request):
     data = request.json
@@ -110,7 +119,7 @@ def register_professional(request):
     date_of_birth = data.get('date_of_birth') 
     gender = data.get('gender')
     address = data.get('address')
-    city = city.lower(data.get('city'))
+    city = data.get('city')
     pincode = data.get('pincode')
     service_provided = data.get('service_provided')
     years_of_experience = data.get('years_of_experience')
